@@ -1,9 +1,9 @@
 {
     "num_systems": 3,
-    "num_servers": 6,
+    "num_servers": 4,
     "num_clients": 9,
     "num_swarms": 2,
-    "num_Decoder_Blocks": 6,
+    "num_Decoder_Blocks": 4,
     "local_steps":10000,
     "global_steps":200,
     "time_quantum":0.01,

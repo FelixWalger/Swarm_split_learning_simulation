@@ -500,7 +500,7 @@ class Server:
             self.job_metadata[job.job_id][f"decoder{decoder_block.block_id}_take"] = 0
             self.job_metadata[job.job_id][f"decoder{decoder_block.block_id}_num_of_tok_completed"] = 0
         self.update_queue_weight(job.job_id)
-        if job.finished:
+        if job.status == "completed":
             self.terminate_job(job.job_id)
 
     def create_queues_and_trackinDict_for_job(self, job):
@@ -785,7 +785,7 @@ class Server:
         self.allocate_job_memory(job)
 
 
-        if job.finished:
+        if job.status == "completed":
             self.terminate_job(job.job_id)
 
         self.outgoing_queues[job.job_id].append(job_iteration)

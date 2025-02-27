@@ -179,7 +179,7 @@ class Simulation:
             client.routing_policy = routing_policy
            
 
-    def setup_system_clone_with_change(self, topology_policy, routing_policy, selection_strategy):    
+    def setup_system_clone_with_change(self, topology_policy, routing_policy, selection_strategy, topology_dict = None):    
         comm_links_copy = self.deepcopy_comm_links(self.system.communication_links)
         servers, clients = self.get_servers_and_client_from_comm_links(comm_links_copy)
         comm_links_copy, servers, clients = self.replace_servers_and_clients_at_comm_links(comm_links_copy, servers, clients)
@@ -200,6 +200,7 @@ class Simulation:
             selection_strategy_at_servers=selection_strategy,
             clients_list=clients,
             DecoderBlock_list=self.decoder_blocks,
+            topology_dict=topology_dict,
             config_filename='config_simulation.json'
         )
         self.system_id_counter += 1
@@ -214,10 +215,17 @@ class Simulation:
         for central_step in range(central_steps):
             for system in self.systems:
                 last_time = system.run_time_steps(time_quantum=time_quantum, start_time=start_time, steps=steps)
-            if central_step == central_steps - 4:
+            if central_step == central_steps - 1:
                 for client in self.clients:
-                    client.launch_job_stop()
+                    client.launch_job_stop()                   
             start_time = last_time
+
+            while any(client.job_metadata[job_id]["end_time"] is None for system in self.systems for client in system.clients for job_id in client.job_metadata):
+                for system in self.systems:
+                    if any(client.job_metadata[job_id]["end_time"] is None for client in system.clients for job_id in client.job_metadata):
+                            
+                        last_time = system.run_time_steps(time_quantum=time_quantum, start_time=start_time, steps=steps)
+                start_time = last_time
 
     
     def final_analyzes_of_job_work_periods(self):
@@ -366,7 +374,7 @@ class Simulation:
                         f"global_steps: {self.global_steps}", 
                         f"local_steps: {self.steps}"
                     ])
-
+    
     def read_and_plot_results(self, csv_file_paths):
         all_total_tokens = []
         all_average_job_time = []
@@ -419,11 +427,11 @@ class Simulation:
         self.systems.append(self.system)
 
 
-        system = self.setup_system_clone_with_change(topology_policy="latency", routing_policy="min_cost_max_flow", selection_strategy="FIFO")
+        system = self.setup_system_clone_with_change(topology_policy="latency", routing_policy="min_cost_max_flow", selection_strategy="FIFO", topology_dict = self.system.topology_dict)
         self.systems.append(system)
-        system = self.setup_system_clone_with_change(topology_policy="latency", routing_policy="round_robin", selection_strategy="longest_time_not_seen")
+        system = self.setup_system_clone_with_change(topology_policy="latency", routing_policy="round_robin", selection_strategy="longest_time_not_seen", topology_dict = self.system.topology_dict)
         self.systems.append(system)
-        system = self.setup_system_clone_with_change(topology_policy="latency", routing_policy="round_robin", selection_strategy="FIFO")
+        system = self.setup_system_clone_with_change(topology_policy="latency", routing_policy="round_robin", selection_strategy="FIFO", topology_dict = self.system.topology_dict)
         self.systems.append(system)
         system = self.setup_system_clone_with_change(topology_policy="throughput", routing_policy="min_cost_max_flow", selection_strategy="longest_time_not_seen")
         self.systems.append(system)

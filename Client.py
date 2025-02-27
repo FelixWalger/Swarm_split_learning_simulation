@@ -221,6 +221,8 @@ class Client:
             and job.status == "prompt"):
             print(f"Client {self.client_id}: Job {job_id} is transitioning from prompt to decoding.")
             job.status = "decoding"
+            job.token_buffer_alloc = 1 
+
 
         # If we've now processed (prompt + final) tokens, it’s completed
         if (self.job_metadata[job_id]["total_tokens"] >= job.token_prompt_length + job.decoding_token_length
@@ -975,7 +977,6 @@ class Job:
         self.KV_cache_alloc = KV_cache_alloc
 
         self.random_test = "random"
-        self.finished = False
 
         self.current_index = 0
 

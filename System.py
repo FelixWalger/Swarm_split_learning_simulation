@@ -34,6 +34,7 @@ class System:
         routing_policy=None,
         topology_policy=None,
         selection_strategy_at_servers=None,
+        topology_dict=None,
         config_filename='config_simulation.json'
     ):
         """
@@ -100,6 +101,7 @@ class System:
 
         # Build or store a topology graph if needed
         # (If you want an NX graph from swarms or from servers/links, do it here)
+        self.topology_dict = topology_dict
         self.topology = None
         self.swarms = []
 
@@ -114,7 +116,7 @@ class System:
         if self.system_init == "server_commlink_object_based":
             if self.DecoderBlock_list is None:
                 self._init_decoder_blocks()
-            self.create_topology()
+            self.topology_dict = self.create_topology(self.topology_dict)
             G = self._create_topology_graph()
             for client in self.clients:
                 # Make a deep copy of the original graph
@@ -315,21 +317,23 @@ class System:
                 if hasattr(cli, "add_topology"):
                     cli.add_topology(self.topology)
 
-    def create_topology(self):
+    def create_topology(self, topology_dict=None):
         """
         Placeholder for creating a network topology.
         This is a no-op here, just demonstrating the idea.
         """
         if self.topology_policy == "throughput":
             print("[INFO] Creating topology based on throughput.")
-            topology_dict = self.create_throughput_balanced_swarms(self.num_swarms, self.num_decoder_blocks)
+            if topology_dict is None:
+                topology_dict = self.create_throughput_balanced_swarms(self.num_swarms, self.num_decoder_blocks)
             self._find_from_topology_dict_comm_link(topology_dict)
             self._find_client_comm_links_from_topology_dict(topology_dict)
             self._create_full_swarms(topology_dict)
             self._assign_decoder_blocks_to_servers(topology_dict)
         elif self.topology_policy == "latency":
             print("[INFO] Creating topology based on latency.")
-            topology_dict = self.create_latency_balanced_swarms()
+            if topology_dict is None:
+                topology_dict = self.create_latency_balanced_swarms()
 
             self._find_from_topology_dict_comm_link(topology_dict)
             self._find_client_comm_links_from_topology_dict(topology_dict)
@@ -337,6 +341,7 @@ class System:
             self._assign_decoder_blocks_to_servers(topology_dict)
 
         self._create_topology_graph()    
+        return topology_dict
 
     def create_latency_balanced_swarms(self):
         opti_problem = OptiProblem(
