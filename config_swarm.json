@@ -1,0 +1,41 @@
+{
+    "num_systems": 3,
+    "num_servers": 5,
+    "num_clients": 3,
+    "total_time_quantiles": 10,
+
+
+
+    "server_properties": {
+      "throughput_range": [50, 150],
+      "memory_range": [1024, 4096],
+      "decoder_block_memory_range": [128, 256],
+      "d_model_memory_range": [256, 512],
+      "KV_cache_range": [256, 512],
+      "dropout_prob_range": [0.01, 0.1],
+      "selection_strategy": "FIFO",     
+      "up_server_time_range_min": [1, 99999999999999],
+      "down_server_time_range_min": [0.0001, 5]
+    },
+    "client_properties": {
+      "max_token_length_range": [50, 100]
+    },
+    "system_properties": {
+      "max_token_length_range": [50, 100],
+      "memory_mapping_token_range": [256, 512]
+    },
+    "network_properties": {
+      "data_rate_range_Mbits/s": [25, 1500],
+      "distance_range_km": [0, 30000],  
+      "propagation_speed_km/s": 200000,
+      "jitter_lognorm_param_tuples_mu_sigma": [[0.1, 0.1], [0.1, 5],[5,0.1]],
+      "up_link_time_range_min": [1, 99999999999999],
+      "down_link_time_range_min": [0.0001, 5]
+    },
+
+    "routing_policies": "round_robin",
+    "Toplogy_policy": "throughput",
+    "precision": 16,
+    "d_model": 512
+
+  }
