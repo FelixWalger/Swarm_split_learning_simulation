@@ -41,9 +41,12 @@ class Simulation:
         self.steps = steps
         self.time_quantum = time_quantum
         self.global_steps = global_steps
-        self.servers = []
-        self.clients = []
-        self.comm_links = []
+        self.parent_servers = []
+        self.parent_clients = []
+        self.parent_comm_links = []
+        self.all_servers = []
+        self.all_clients = []
+        self.all_comm_links = []
         self.decoder_blocks = []
         self.system = None
         self.systems = []
@@ -51,45 +54,45 @@ class Simulation:
     def setup_servers(self):
         for i in range(self.num_servers):
             srv = Server(server_id=i)
-            self.servers.append(srv)
+            self.parent_servers.append(srv)
 
     def setup_communication_links(self):
         link_id = 0
-        for i in range(len(self.servers)):
-            for j in range(len(self.servers)):
+        for i in range(len(self.parent_servers)):
+            for j in range(len(self.parent_servers)):
                 if i != j:
                     link = CommunicationLink(
                         link_id=link_id,
-                        from_entity=self.servers[i],
-                        to_entity=self.servers[j],
+                        from_entity=self.parent_servers[i],
+                        to_entity=self.parent_servers[j],
                     )
-                    self.comm_links.append(link)
+                    self.parent_comm_links.append(link)
                     link_id += 1
 
-        for server in self.servers:
-            for client in self.clients:
+        for server in self.parent_servers:
+            for client in self.parent_clients:
                 link = CommunicationLink(
                     link_id=link_id,
                     from_entity=server,
                     to_entity=client,
                 )
-                self.comm_links.append(link)
+                self.parent_comm_links.append(link)
                 link_id += 1
 
-        for client in self.clients:
-            for server in self.servers:
+        for client in self.parent_clients:
+            for server in self.parent_servers:
                 link = CommunicationLink(
                     link_id=link_id,
                     from_entity=client,
                     to_entity=server,
                 )
-                self.comm_links.append(link)
+                self.parent_comm_links.append(link)
                 link_id += 1
 
     def setup_clients(self):
         for i in range(1, self.num_clients + 1):
             client = Client(client_id=i, num_stages=self.num_swarms)
-            self.clients.append(client)
+            self.parent_clients.append(client)
 
     def setup_decoder_blocks(self):
         for block_id in range(self.num_decoder_blocks):
@@ -100,12 +103,13 @@ class Simulation:
         self.system = System(
             system_id=self.system_id_counter,
             system_init="server_commlink_object_based",
-            servers_list=self.servers.copy(),
-            commlinks_list=self.comm_links.copy(),
-            clients_list=self.clients.copy(),
+            servers_list=self.parent_servers,
+            commlinks_list=self.parent_comm_links,
+            clients_list=self.parent_clients,
             DecoderBlock_list=self.decoder_blocks,
             config_filename='config_simulation.json'
         )
+        self.system.make_system_init()
         self.system_id_counter += 1
 
     def deepcopy_comm_links(self, comm_links):
@@ -180,16 +184,16 @@ class Simulation:
            
 
     def setup_system_clone_with_change(self, topology_policy, routing_policy, selection_strategy, topology_dict = None):    
-        comm_links_copy = self.deepcopy_comm_links(self.system.communication_links)
+        comm_links_copy = self.deepcopy_comm_links(self.parent_comm_links)
         servers, clients = self.get_servers_and_client_from_comm_links(comm_links_copy)
         comm_links_copy, servers, clients = self.replace_servers_and_clients_at_comm_links(comm_links_copy, servers, clients)
         self.change_servers_selection_strategy(servers, selection_strategy)
         
         self.change_clients_routing_policy(clients, routing_policy)
 
-        self.clients.extend(clients)
-        self.servers.extend(servers)
-        self.comm_links.extend(comm_links_copy)
+        self.all_clients.extend(clients)
+        self.all_servers.extend(servers)
+        self.all_comm_links.extend(comm_links_copy)
         system = System(
             system_id=self.system_id_counter,
             system_init="server_commlink_object_based",
@@ -212,20 +216,24 @@ class Simulation:
         steps = self.steps
         start_time=0.1
         last_time = 0.1
+        
         for central_step in range(central_steps):
             for system in self.systems:
                 last_time = system.run_time_steps(time_quantum=time_quantum, start_time=start_time, steps=steps)
             if central_step == central_steps - 1:
-                for client in self.clients:
+                for client in self.all_clients:
                     client.launch_job_stop()                   
             start_time = last_time
 
-            while any(client.job_metadata[job_id]["end_time"] is None for system in self.systems for client in system.clients for job_id in client.job_metadata):
-                for system in self.systems:
-                    if any(client.job_metadata[job_id]["end_time"] is None for client in system.clients for job_id in client.job_metadata):
-                            
-                        last_time = system.run_time_steps(time_quantum=time_quantum, start_time=start_time, steps=steps)
-                start_time = last_time
+        for client in self.all_clients:
+            client.launch_job_stop()  
+
+        while any(client.job_metadata[job_id]["end_time"] is None for system in self.systems for client in system.clients for job_id in client.job_metadata):
+            for system in self.systems:
+                if any(client.job_metadata[job_id]["end_time"] is None for client in system.clients for job_id in client.job_metadata):
+                        
+                    last_time = system.run_time_steps(time_quantum=time_quantum, start_time=start_time, steps=steps)
+            start_time = last_time
 
     
     def final_analyzes_of_job_work_periods(self):
@@ -426,6 +434,10 @@ class Simulation:
         self.setup_system()
         self.systems.append(self.system)
 
+        self.all_clients.extend(self.parent_clients)
+        self.all_servers.extend(self.parent_servers)
+        self.all_comm_links.extend(self.parent_comm_links)
+
 
         system = self.setup_system_clone_with_change(topology_policy="latency", routing_policy="min_cost_max_flow", selection_strategy="FIFO", topology_dict = self.system.topology_dict)
         self.systems.append(system)
@@ -443,7 +455,8 @@ class Simulation:
         self.systems.append(system)
 
         for system in self.systems:
-            system.make_system_init()
+            if system is not self.system:
+                system.make_system_init()
        
         self.run_time_steps_on_all_systems()
         self.final_analyzes_of_job_work_periods()

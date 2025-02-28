@@ -163,7 +163,7 @@ class Server:
         self.num_blocks = len(self.decoder_blocks)
         # Example memory usage update. Adjust as needed:
         if allocation:
-            print("Here")
+            #print("Here")
             print(self.allocate_model_memory(decoder_block.get_model_memory_usage()))
         print(self.use_model_memory(decoder_block.get_model_memory_usage()))    
         self.lowest_decoder_block_id = min(self.decoder_blocks.keys()) if self.decoder_blocks else None
@@ -189,7 +189,7 @@ class Server:
         """
         Reserve memory for the job's model parameters.
         """
-        print("model_block_num_params", model_block_num_params)
+        #print("model_block_num_params", model_block_num_params)
         if precision is None:
             precision = self.precision
         precision_bytes = precision // 8
@@ -407,11 +407,11 @@ class Server:
         if self.all_memory_used > self.cache_memory_capacity:
             penalty_factor = 10
         if self.num_blocks == 1 or num_blocks == 1:
-            return self.base_throughput*penalty_factor
+            return self.base_throughput / penalty_factor
         if num_blocks is None:
-            return (self.base_throughput - (self.degrading_factor * self.num_blocks))*penalty_factor
+            return (self.base_throughput - (self.degrading_factor * self.num_blocks)) / penalty_factor
         elif num_blocks > 1:
-            return (self.base_throughput - (self.degrading_factor * num_blocks)) * penalty_factor
+            return (self.base_throughput - (self.degrading_factor * num_blocks)) / penalty_factor
 
     def sample_actual_throughput(self):
         """
@@ -496,7 +496,7 @@ class Server:
         self.job_metadata[job.job_id]["arrival_time"] = current_time
         self.job_metadata[job.job_id]["sum_tokens_over_all_time"] += job_iteration.token_in_iteration
         for i, decoder_block in enumerate(self.decoder_blocks.values()):
-            print(f"decoder{i}_take: {decoder_block}")
+            #print(f"decoder{i}_take: {decoder_block}")
             self.job_metadata[job.job_id][f"decoder{decoder_block.block_id}_take"] = 0
             self.job_metadata[job.job_id][f"decoder{decoder_block.block_id}_num_of_tok_completed"] = 0
         self.update_queue_weight(job.job_id)

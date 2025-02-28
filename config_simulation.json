@@ -4,9 +4,9 @@
     "num_clients": 9,
     "num_swarms": 2,
     "num_Decoder_Blocks": 4,
-    "local_steps":10000,
-    "global_steps":200,
-    "time_quantum":0.01,
+    "local_steps":2500,
+    "global_steps":12,
+    "time_quantum":0.05,
 
     "server_properties": {
       "throughput_range": [2, 8],
@@ -15,7 +15,7 @@
       "selection_strategy2": "FIFO", 
       "selection_strategy": "longest_time_not_seen",     
       "down_server_time_range_min": [1, 4],
-      "up_server_time_range_min": [5, 250],
+      "up_server_time_range_min": [29, 250],
       "degradation_rate": [0, 0.1]
       },
       "client_properties": {
@@ -32,7 +32,7 @@
       "propagation_speed_km/s": 200000,
       "jitter_lognorm_param_tuples_mu_sigma": [[0.1, 0.1], [0.1, 5],[5,0.1]],
       "down_link_time_range_min": [1, 4],
-      "up_link_time_range_min": [5, 500]
+      "up_link_time_range_min": [20, 500]
       },
   
 

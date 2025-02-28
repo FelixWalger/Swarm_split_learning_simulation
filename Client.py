@@ -205,6 +205,11 @@ class Client:
         job_id = job.job_id
         self.job_metadata[job_id]["total_tokens"] += job_iteration.token_in_iteration
         
+        if job.status == "completed" and self.job_metadata[job_id]["end_time"] is not None:
+            return None
+        
+        if len(self.job_metadata[job_id]["iteration_end_times"]) >= len(self.job_metadata[job_id]["iteration_start_times"])+2:
+            print("weird")
         # 1) Mark the 'end' of this iteration in metadata
         self.job_metadata[job_id]["iteration_end_times"].append(current_time)
 
@@ -237,8 +242,7 @@ class Client:
             self.finalize_job(job_id, current_time)
             return JobIteration(job=job, iteration_id=new_iter_id, token_in_iteration=0)
         
-        if job.status == "completed" and self.job_metadata[job_id]["end_time"] is not None:
-            return None
+
 
         # 4) Otherwise, create a new iteration to continue the job
         new_iter_id = self._get_next_iteration_id()
@@ -260,7 +264,7 @@ class Client:
         """
         Finalize a job that has completed.
         """
-        if self.job_metadata[job_id]["end_time"] is not None:
+        if self.job_metadata[job_id]["end_time"] is  None:
             self.job_metadata[job_id]["end_time"] = current_time
         print("========================END=OF=JOB===================================")
         print(f"Client {self.client_id}: Job {job_id} completed at time {current_time} with prompt tokens {self.job_metadata[job_id]['prompt_tokens']} and total tokens {self.job_metadata[job_id]['total_tokens']}")
@@ -268,6 +272,7 @@ class Client:
         print(f"Iteration start times: {self.job_metadata[job_id]['iteration_start_times']}")
         print(f"Iteration end times: {self.job_metadata[job_id]['iteration_end_times']}")
         print(f"Total time: {current_time - self.job_metadata[job_id]['start_time']}")
+        print(f"total time for calc: {self.job_metadata[job_id]['end_time'] - self.job_metadata[job_id]['start_time']}")
         print("=====================================================================")
 
     def start_new_job(self, current_time, default_token_buffer_alloc=512, default_KV_cache_alloc=512):
@@ -639,7 +644,7 @@ class Client:
             #   capacity = link.link_throughput
             # or any other function that reflects network constraints.
             cost = link.get_expected_latency_per_token(self.d_model*self.precision)
-            print(f"cost: {cost}, type: {type(cost)}")
+           # print(f"cost: {cost}, type: {type(cost)}")
             capacity = 1000000000000000000000 #Big number to simulate infinite capacity
             if cost >= 1e5:
                 capacity = 0  # If cost is too high, don't allow flow

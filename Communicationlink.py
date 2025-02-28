@@ -260,9 +260,9 @@ class CommunicationLink:
             arrival_time = arr_t if arr_t is not None else float('nan')
             if tx["transmission_end_time"] is float('nan') or arr_t is float('nan'):
                 print("nan")
-            print(f"[Link {self.link_id}] JobIteration {job_iter.iteration_id} arrived at {self.to_entity} "
-                  f"at time={current_time:.2f} (trans_start={tx['transmission_start_time']:.2f}, "
-                  f"end={trans_end_time:.2f}, arrival={arrival_time:.2f})")
+            #print(f"[Link {self.link_id}] JobIteration {job_iter.iteration_id} arrived at {self.to_entity} "
+            #      f"at time={current_time:.2f} (trans_start={tx['transmission_start_time']:.2f}, "
+             #     f"end={trans_end_time:.2f}, arrival={arrival_time:.2f})")
             if job_iter.job.status == "initialization":
                 self.to_entity.start_job(job_iter)
             else:
